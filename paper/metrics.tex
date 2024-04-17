@@ -1,0 +1,51 @@
+\section{Metrics for the similarity of chord progressions}
+
+\subsection{Distance between the chord progressions}
+In order to evaluate how well our models emulate the chord progressions of Beethoven, we need to define a metric that quantifies the similarity between two chord progressions.
+
+The first metric that comes to mind, is a binary metric, that just discriminates between the chord being correct or not, compared to the chord labels of the ground truth.
+\[
+     d_{bin}(x, y) = \begin{cases}
+        1 & \text{if } x = y \\
+        0 & \text{otherwise}
+    \end{cases}
+\]
+This metric, has the issue, that it treats all mistakes as equally undesirable. In the context of music, this is however not the case. 
+For once, the model might predict the right chord, but in the wrong inversion, or it might predict a \texttt{VII} while we were expecting a \texttt{V}$^{6}_5$. It is obvious, that those mistakes are not as grave as say giving out a \#\texttt{IV} instead of a \texttt{I}. The binary metric does not recognize that.
+
+To account for this, McLeoud et. al.  suggest three different metrics in \cite{McLeod2022}, invoking a more contextualized approach.
+
+\begin{description}[font=\normalfont\itshape]
+  \item [Spectral Pitch Similarity (SPS)] Is a measure to account for the perceived distance between two chords, based on the pitch content of the chords, based on psychoacoustic assumptions.
+    For each chord label, the \texttt{eval\_chord} package generates several MIDI-chords and takes a spectrogram thereof. Subsequently, for each pair of spectrograms, the cosine similarity $\mathrm{sim}_{\cos}(A, B) = cos(\theta) = \frac{A \cdot B}{\|A\| \|B\|}$ is calculated. The SPS distance is then given as
+    \[
+          d_{SPS}(x, y) = 1 - \max \left( \mathrm{sim}_{\cos} (x, y) \right)\,.
+    \]
+  \item [Tone-by-Tone Distance] This metric treats each chord as a set of tones or pitch classes. For two chord it measures the proportion of pitch classes of chord one, which are contained in chord two and vice versa. For instance \texttt{am} and \texttt{C} share $ [c] $ and $ [e] $, each chord consists of three pitch classes each, thus the proportion for the classes of \texttt{C} contained in \texttt{am} is $ \frac{2}{3} $. If one chord consists of more pitch classes than the other one, the proportions are not necessary equal, i.e. 
+    \[
+         \mathrm{prop}\{ \mathtt{am}, \mathtt{C}^{7} \} = \frac{2}{3} \quad \text{while} \quad \mathrm{prop}\{ \mathtt{C}^{7}, \mathtt{am} \} = \frac{1}{2}\,.
+    \]
+In Addition to the proportions of the pitch classes, the metric also takes into account whether the root of the chords and the bass note of the chords match. Thus giving the user the option to emphasize different structural needs.
+    The tone-by-tone distance is then given as
+    \begin{align*}
+      d_{TbT}(x, y) &= 1 - \frac{1}{2}\left( \frac{\mathrm{prop}\{x, y\} + b_R\indicator_{R_x = R_y} + b_B\indicator_{B_x = B_y}}{|x| + b_R + b_B}\right.\\ 
+                    & \hspace{5em}\left. + \frac{\mathrm{prop}\{y, x\} + b_R\indicator_{R_x = R_y} + b_B\indicator_{B_x = B_y}}{|y| + b_R + b_B}\right)\,,
+    \end{align*}
+    where $ R_x $ and $ B_x $ are the root and bass note of chord $ x $, $ |x| $ is the number of pitch classes in chord $ x $ and $ b_R, b_B $ are the \enquote{root bonus} and \enquote{bass bonus}, weights to adjust the importance of those two features.
+  \item [Mechanical distance] This metric takes into account how far the notes needed to play the chords are apart in a physical setting and on the chromatic scale. This can be useful for instance for training robotic musicians or for automatically evaluating the performance of someone on an actual instrument. Furthermore it is important to note that this metric is similar to so called voice leading distances (\cite{tymoczko2009}).
+
+    As neither mechanical training nor voice leading is the focus of this paper, we will forgo the details of this metric.
+\end{description}
+
+As McLeoud et. al. point out, there is a correlation between the SPS and the tone-by-tone distances, especially for chords that are unrelated. The SPS metric however is more varied with the penalties for diverging. We will use both those metrics in the following discussion of the models.
+
+\subsection{Evaluating the quality of the labels}
+
+With the different distance metrics at hand, we can now evaluate the quality of a single estimated chord. Our goal however is to train our models on progressions of chords, thus requiring a method of applying the chord wise distances to sequences of chords.
+
+A simple approach would be to calculate the average of the distances of the individual chords. This is also refered to Chord Symbol Recall (CSR) in \cite{Harte2010TowardsAE}. While Harte mostly discusses chord recognition from audio files, the proposed metric is still applicable. The CSR is given as the average over the distances of the chords in the progression measured against the ground truth.
+\[
+    \mathrm{CSR}(X, Y) = \frac{1}{N} \sum_{i = 1}^{N} d(x_i, y_i)\,,
+\]
+where $ X = (x_1, \ldots, x_{N}) $ and $ Y = (y_1, \ldots, y_{N}) $ are the sequences of chords, that we are comparing.
+

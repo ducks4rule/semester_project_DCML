@@ -1,0 +1,64 @@
+\documentclass[10pt,a4paper]{scrarticle}
+
+\input{/home/lorenz/Documents/Programming/LaTeX/Preambles/Preamble-Standard 1.tex}
+
+% Schrift
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb,amsthm,mathtools}
+\usepackage{bbm}
+
+% Sprache
+\usepackage[british]{babel}
+\usepackage{csquotes}
+
+%Graphics
+% \usepackage{subcaption}
+
+% todos
+\usepackage[textsize=tiny]{todonotes}
+
+
+
+%\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\setenumerate[0]{label=(\alph*)}
+\usepackage{comment}
+\usepackage{setspace}
+
+% Theorems and counters
+
+% Sätze usw
+\theoremstyle{plain} 
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{kor}[thm]{Korollar}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{fakt}[thm]{Faktum}
+% Defs, Bsp, Notation
+\theoremstyle{definition}
+\newtheorem{mydef}{Definition}[section]
+\newtheorem{example}{Example}[section]
+% Bemerkungen
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{notation}{Notation}
+
+
+% define command for indicator function
+\newcommand{\indicator}{\mathbbm{1}}
+
+\usepackage{hyperref}
+
+\begin{document}
+
+
+\input{introduction.tex}
+\input{metrics.tex}
+\input{models.tex}
+
+
+% bibliography
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
