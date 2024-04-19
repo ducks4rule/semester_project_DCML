@@ -7,7 +7,7 @@
 import pandas as pd
 import numpy as np
 
-import os
+from markov_chain.ju.py import MarkovChain
 
 # %% [markdown]
 """
@@ -102,8 +102,8 @@ class NGramModel:
             print('simple step')
             return self.simple_step(ch)
         elif len(ch.split()) == 1:
-            # TODO markov chain
-            print('TODO this is where the markov chain should be')
+            model = MarkovChain(self.df).fit()
+            return model.step(ch)
         else:
             temp_mod = NGramModel(self.df, n_gram_=len(ch.split()) + 1)
             print('difficult step')
