@@ -104,25 +104,21 @@ class MarkovChain:
 fit the model
 """
 # %%
+length_of_pred = 36
 markov = MarkovChain(df).fit()
-# markov.predict('I', n=36, verbose=True)
+pred = markov.predict('I', n=length_of_pred, verbose=True)
     
 # %% [markdown]
 """
-test the metrics
+save transition matrix and predictions
 """
 
 # %%
-import chord_eval as ce
+# save predictions and ground truth in two files
+np.savetxt('markov_predictions.csv', pred, delimiter=',', fmt='%s')
+np.savetxt('markov_ground_truth.csv', df[:length_of_pred], delimiter=',', fmt='%s')
 
-start = 'I'
-length = 32
-
-pred_chords = markov.predict(start, n=length, start_at_current=True)
-
-org_chords = df.values[:length]
-
-for y, y_hat in zip(pred_chords, org_chords):
-    print(y, y_hat)
-    tone_by_tone = ce.get_distance(y, y_hat)
-    
+# %%
+# save transition matrix in latx compatible format
+matrix = markov.markov_transition_matrix()
+np.savetxt('markov_transition_matrix.csv', matrix, delimiter=' & ', fmt='%1.2f', newline=' \\\\\n')
