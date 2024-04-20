@@ -7,24 +7,48 @@
 import pandas as pd
 import numpy as np
 
-from markov_chain.ju.py import MarkovChain
-
 # %% [markdown]
 """
 loading the data
 """
+# %%
+
+class MyToken:
+    def __init__(self,
+                 numeral_: str,
+                 inversion_: str):
+        self.numeral = numeral_
+        self.inversion = inversion_
+
+    def __repr__(self):
+        return f'{self.numeral} {self.inversion}'
+
+    def __eq__(self, other):
+        return self.numeral == other.numeral and self.inversion == other.inversion
+    def __hash__(self):
+        return hash(repr(self))
+
+    def get_all_numerals(self, ts):
+        return [t.numeral for t in ts]
+
+    def get_all_inversions(self, ts):
+        return [t.inversion for t in ts]
+
 
 # %%
 path = '~/Documents/Mathematik/24 FS/Semester_Paper_DCML/data/ABC/harmonies/'
 file = 'n10op74_01.harmonies.tsv'
 df_all = pd.read_csv(path + file, sep='\t')
+df_all['figbass'].fillna('0', inplace=True)
+df_all['figbass'] = df_all['figbass'].astype(int).astype(str)
 
 # define new dataframe df with only the 'numeral' column
-df = df_all['numeral']
-# df = df_all['chord']
+# df = df_all[['numeral', 'figbass']].values
+df = []
+for t in zip(df_all['numeral'], df_all['figbass']):
+    df.append(MyToken(t[0], t[1]))
+    
 df_ = pd.factorize(df)
-print(len(df_[1]))
-
 
 # %% [markdown]
 """
@@ -33,33 +57,27 @@ N-gram model
 # %%
 
 class NGramModel:
-    def __init__(self, df, n_gram_: int = 2):
+    def __init__(self, df: list, n_gram_: int = 2):
         self.df = df
         self.df_ = pd.factorize(df)
         assert(n_gram_ > 1)
         self.n_gram = n_gram_
 
-        self.clean_data()
-
         self.input_df = self.generate_n_grams(self.df, self.n_gram-1)
-        self.input_df_ = pd.factorize(self.input_df)
+        print(np.shape(self.input_df))
+        # self.input_df_ = pd.factorize(self.input_df)
         self.data = self.generate_n_grams(self.df, self.n_gram)
+        print(np.shape(self.data))
         self.data_ = pd.factorize(self.data)
     
-    def clean_data(self):
-        # if df_ contains a None value, remove it and the corresponding entry in df
-        if None in self.df_[1]:
-            ind = np.argwhere(df_[1] is None)
-            self.df = np.delete(self.df, ind)
-
     # generate n-grams
     def generate_n_grams(self, df, n_gram):
-        chords = df.values
+        chords = df
         temp = zip(*[chords[i:] for i in range(0, n_gram)])
         n_grams = []
         for t in temp:
-            n_grams.append(' '.join(t))
-        return np.array(n_grams)
+            n_grams.append(t)
+        return n_grams
 
     # calculate the transition matrix
     def transition_probs(self):
@@ -93,7 +111,7 @@ class NGramModel:
         return vec
 
     def fit(self):
-        self.clean_data()
+        # self.clean_data()
         self.trans_mat = self.transition_probs()
         return self
 
@@ -102,8 +120,9 @@ class NGramModel:
             print('simple step')
             return self.simple_step(ch)
         elif len(ch.split()) == 1:
-            model = MarkovChain(self.df).fit()
-            return model.step(ch)
+            temp_mod = NGramModel(self.df, n_gram_=2)
+            print('step w/ 2')
+            return temp_mod.fit().step(ch)
         else:
             temp_mod = NGramModel(self.df, n_gram_=len(ch.split()) + 1)
             print('difficult step')
@@ -129,10 +148,11 @@ class NGramModel:
 
 
 # %%
-n_gram = NGramModel(df, n_gram_=4)
+n_gram = NGramModel(df, n_gram_=3)
 n_gram.fit()
-pred = n_gram.predict('I V',n=5, verbose=True)
-print('seq ', pred)
+print(n_gram.generate_n_grams(df, 4))
+
+n_gram.simple_step('I V')
 
 # %% [markdown]
 """
