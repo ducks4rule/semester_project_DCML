@@ -92,7 +92,7 @@ class NGram:
         else:
             predictions = list(x)
         for i in range(n):
-            if verbose:
+            if verbose and i % 40 == 0:
                 print('step ', i, ' of ', n)
             x = self.step(x)
             predictions.append(x)

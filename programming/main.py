@@ -16,8 +16,8 @@ df_all['figbass'].apply(lambda x: utils.translate_figbass(x))
 # define new dataframe df with only the 'numeral' column
 # df = df_all[['numeral', 'figbass']].values
 df = []
-for n, fb in zip(df_all['numeral'], df_all['figbass']):
-    tok_nu = utils.translate_numeral(n)
+for m, fb in zip(df_all['numeral'], df_all['figbass']):
+    tok_nu = utils.translate_numeral(m)
     tok_in = utils.translate_figbass(fb)
     tok_ch = utils.translate_chord_type(tok_nu, fb)
     df.append(MyToken(tok_nu, tok_in, tok_ch))
@@ -26,22 +26,36 @@ len_df = len(df)
 
 
 
+j = 0
+# n = 3
+inversions = [False, True]
+verbose = False
 
-n_gram_model = NGram(df, n=3, inversions=False)
-n_gram_model.fit()
-unique_tokens_in = n_gram_model.unique_tokens_in
-start = unique_tokens_in[0]
-prediction = n_gram_model.predict(start, 400, verbose=True)
+for m in range(2, 10):
+    for inversion in inversions:
+        for j in range(5):
+            print(m, inversion, j)
+            n_gram_model = NGram(df, n=m, inversions=inversion)
+            n_gram_model.fit()
+            unique_tokens_in = n_gram_model.unique_tokens_in
+            start = unique_tokens_in[0]
+            prediction = n_gram_model.predict(start, 400, verbose=verbose)
+            print(type(prediction))
+            length = min(len_df, len(prediction))
+            print('length ', length)
 
-# save preditcion to a file with pickle
-# also save df[:len(prediction)] to a file with pickle
-with open('prediction.pkl', 'wb') as f:
-    pickle.dump(prediction, f)
-with open('ground_truth.pkl', 'wb') as f:
-    pickle.dump(df[:len(prediction)], f)
+            # save preditcion to a file with pickle
+            # also save df[:len(prediction)] to a file with pickle
+            name = str(m) + '_inv_' + str(inversion) + '_num_' + str(j)
+            with open('n_gram_prediction' + name + '.pkl', 'wb') as f:
+                pickle.dump(prediction[:length], f)
+            with open('n_gram_ground_truth' + name + '.pkl', 'wb') as f:
+                pickle.dump(df[:length], f)
+            with open('n_gram_matrix' + name + '.pkl', 'wb') as f:
+                pickle.dump(n_gram_model.matrix, f)
+            with open('n_gram_unique_tokens' + name + '.pkl', 'wb') as f:
+                pickle.dump(n_gram_model.unique_tokens, f)
+            with open('n_gram_unique_tokens_in' + name + '.pkl', 'wb') as f:
+                pickle.dump(n_gram_model.unique_tokens_in, f)
 
-with open('prediction.pkl', 'rb') as f:
-    prediction = pickle.load(f)
-with open('ground_truth.pkl', 'rb') as f:
-    ground_truth = pickle.load(f)
 
