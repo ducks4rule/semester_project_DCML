@@ -1,10 +1,22 @@
 \section{Models}
 
 \subsection{Simple Markov Chain Model}
-In order to establish a baseline, we first consider a simple Markov chain model. The model is fitted on the chords of one Beethoven string quartet.
-The probabilities in the matrix simply represent the frequency of the transitions between the chords. Bis sampling from the matrix, we can generate a new chord according to the previous one. 
-\todo{print transition matrix}
+\todo{talk about n gram}
 
-\subsubsection{Performance}
+Implementation:\\ 
+\begin{center}
+  from zeng:
+
+\enquote{I think dictionaries are the appropriate structure for our purpose because of the following practical needs:
+1,When you update a count of a transition, you need to find the coordinate in the matrix, with dictionaries it is always constant lookup time, with list it is linear to the length of the list. 
+2, when you encounter a new transition, you need to check both the existence of the context and the next chord in your “record” for list, the same performance issue arises here. It is constant time for dictionaries and linear time for list. 
+
+And if you consider the time complexity of getting the transition matrix, the list approach is quadratic while the dictionary approach is linear
+
+Let’s say we have 1000 chords in total, this would mean that you might make the algorithm 1000 times faster just by using dictionary.}
+\end{center}
+
+\subsubsection{Performance evaluation}
+\todo{talk about the plots and show them}
 
 \subsection{Comparaison of the Models}

@@ -26,22 +26,42 @@ class ChordType(Enum):
 
 class Numeral(Enum):
     I = 0
-    II = 1
-    III = 2
-    IV = 3
-    V = 4
-    VI = 5
-    i = 6
-    ii = 7
-    iii = 8
-    iv = 9
-    v = 10
-    vi = 11
-    vii = 12
-    VII = 13
-    bVII = 14
-    svii = 15
-    biii = 16
+    bI = 1
+    II = 2
+    bII = 3
+    III = 4
+    sIII = 5
+    bIII = 6
+    IV = 7
+    bIV = 8
+    V = 9
+    sV = 10
+    bV = 11
+    VI = 12
+    bVI = 13
+    VII = 14
+    sVII = 15
+    bVII = 16
+    i = 17
+    si = 18
+    bi = 19
+    ii = 20
+    sii = 21
+    bii = 22
+    iii = 23
+    siii = 24
+    biii = 25
+    iv = 26
+    biv = 27
+    siv = 28
+    v = 29
+    sv = 30
+    bv = 31
+    vi = 32
+    svi = 33
+    vii = 34
+    svii = 35
+    bvii = 36
 
     def __lt__(self, other: Numeral) -> bool:
         return self.value < other.value

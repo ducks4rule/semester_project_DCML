@@ -1,5 +1,5 @@
 from typing import List
-from data_classes import Eq, Numeral, Inversion, MyToken
+from data_classes import Eq, Numeral, Inversion, ChordType, MyToken
 import numpy as np
 
 class NGram:
@@ -10,23 +10,39 @@ class NGram:
         self.n = n
         self.inversion_switch = inversions
         self.data = self.inversions_yes_or_no(data)
-        self.unique_tokens = self.get_output_tokens()
-        self.unique_tokens.sort()
-        self.unique_tokens_in = self.generate_n_gram(self.data, n - 1)
-        self.unique_tokens_in = list(set(self.unique_tokens_in))
-        self.unique_tokens_in.sort()
-        self.matrix = np.zeros((len(self.unique_tokens_in), len(self.unique_tokens)))
-
+        self.unique_tokens_out = self.get_output_tokens()
+        self.unique_tokens_in = self.get_input_tokens()
+        self.matrix = np.zeros((len(self.unique_tokens_in), len(self.unique_tokens_out)))
 
     def inversions_yes_or_no(self, data):
-        # set all inversion to 0 if inversion_switch is False
+        # set all inversion to 0 in case inversion_switch is False
         if not self.inversion_switch:
-            for dat in data:
-                dat.inversion = 0
+            for dat_list in data:
+                for dat in dat_list:
+                    dat.inversion = 0
         return data
 
     def get_output_tokens(self):
-        return list(set(self.data))
+        out_list = []
+        for dat in self.data:
+            out_list += list(set(dat))
+        out_list = list(set(out_list))
+        out_list.sort()
+        out = dict(zip(out_list, range(len(out_list))))
+        return out
+
+    def get_input_tokens(self):
+        tok_list =[]
+        for dat_list in self.data:
+            tupls = self.generate_n_gram(dat_list, self.n - 1)
+            tok_list += list(set(tupls))
+        tok_list = list(set(tok_list))
+        tok_list.sort()
+        print('tok_list', len(tok_list))
+        tok = dict(zip(tok_list, range(len(tok_list))))
+        return tok
+
+            
 
     def duplicated_head(self, xs: List[Eq]) -> bool:
         return xs[0].eq_to(xs[1])
@@ -40,38 +56,42 @@ class NGram:
             n_grams.append(xs[i:i+n])
         return [tuple(gram) for gram in n_grams]
             
-    def n_gram_transition_matrix(self, xs: List[Eq], n: int = 3) -> np.ndarray:
+    def update_transision_matrix(self, xs: List[Eq], n: int = 3) -> np.ndarray:
         n_grams = self.generate_n_gram(xs, n)
-        unique_tokens_out = self.unique_tokens
-        unique_tokens_in = self.unique_tokens_in
 
-        n_out = len(unique_tokens_out)
-        n_in = len(unique_tokens_in)
+        n_out = len(self.unique_tokens_out)
+        n_in = len(self.unique_tokens_in)
         matrix = np.zeros((n_in, n_out))
         for i in range(len(n_grams)):
-            cur = unique_tokens_in.index(n_grams[i][:n - 1])
-            nxt = unique_tokens_out.index(n_grams[i][-1])
+            cur = self.unique_tokens_in[n_grams[i][:n - 1]]
+            nxt = self.unique_tokens_out[n_grams[i][-1]]
             matrix[cur][nxt] += 1
-        for i in range(n_in):
-            sum = np.sum(matrix[i])
-            if sum != 0:
-                matrix[i] /= sum
-            else:
-                matrix[i] = np.zeros(n_out)
         return matrix
 
+    def n_gram_transition_matrix(self) -> np.ndarray:
+        for dat_list in self.data:
+            self.matrix += self.update_transision_matrix(dat_list, self.n)
+
+        n_in = self.matrix.shape[0]
+        n_out = self.matrix.shape[1]
+        for i in range(n_in):
+            sum = np.sum(self.matrix[i])
+            if sum != 0:
+                self.matrix[i] /= sum
+            else:
+                self.matrix[i] = np.zeros(n_out)
+        return self.matrix
+
     def fit(self):
-        self.matrix = self.n_gram_transition_matrix(self.data, self.n)
+        self.matrix = self.n_gram_transition_matrix()
         return self
 
     def step(self, x: List[Eq]) -> Eq:
         index_vec = np.zeros(len(self.unique_tokens_in))
-        index_vec[self.unique_tokens_in.index(x)] = 1
+        index_vec[self.unique_tokens_in[x]] = 1
 
-        matrix = self.n_gram_transition_matrix(self.data, self.n)
-
-        out_vec = np.dot(matrix.T, index_vec)
-        return np.random.choice(self.unique_tokens, 1, p=out_vec)[0]
+        out_vec = np.dot(self.matrix.T, index_vec)
+        return np.random.choice(list(self.unique_tokens_out.keys()), 1, p=out_vec)[0]
 
     def toggle_list_tuple(self, x):
         if isinstance(x, list):
@@ -80,10 +100,10 @@ class NGram:
             return list(x)
 
     def predict(self, x: List[Eq], n: int, verbose=False) -> List[Eq]:
-        x = self.inversions_yes_or_no(x)
+        x = self.inversions_yes_or_no([x])[0]
             
         if len(x) > self.n - 1:
-            x = x[:self.n - 1]
+            x = x[-(self.n - 1):]
             print('list shortend to ', len(x))
 
         if isinstance(x, list):
@@ -98,5 +118,5 @@ class NGram:
             predictions.append(x)
             x = predictions[-self.n + 1:]
             x = self.toggle_list_tuple(x)
-        return predictions
+        return predictions[-n:]
 
